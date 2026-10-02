@@ -1,0 +1,535 @@
+.settings-dialog {
+  width: min(100%, var(--content-w));
+}
+
+.settings-dialog .icon-button svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.settings-section h3 {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--touch-target);
+}
+
+/* Colors: Fileloom's theme picker - a small page in each palette, its name and a tick.
+   The swatch hexes preview the palette blocks of src/styles.css (canvas, raised surface,
+   text, the user's action and the selection color); keep them in step with those blocks */
+.settings-row-palette {
+  flex-wrap: wrap;
+}
+
+.palette-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 96px);
+  gap: var(--space-3);
+}
+
+.palette-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--text-dim);
+  text-align: left;
+  cursor: pointer;
+}
+
+.palette-swatch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 5px;
+  height: 60px;
+  padding: 9px 10px;
+  overflow: hidden;
+  background: var(--sw-glow, none), var(--sw-bg);
+  border: var(--hairline) solid rgba(128, 128, 128, 0.22);
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* the raised surface: a panel corner, as the sidebar sits on the canvas */
+.palette-swatch::before {
+  position: absolute;
+  top: 8px;
+  right: -6px;
+  width: 44%;
+  height: 26px;
+  content: "";
+  background: var(--sw-panel);
+  border-radius: 4px;
+}
+
+/* the selection color, a dot on the panel */
+.palette-swatch::after {
+  position: absolute;
+  top: 17px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  content: "";
+  background: var(--sw-accent);
+  border-radius: var(--radius-pill);
+}
+
+.palette-swatch > i {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sw-text);
+}
+
+.palette-swatch > i:nth-child(1) {
+  width: 62%;
+  opacity: 0.55;
+}
+
+.palette-swatch > i:nth-child(2) {
+  width: 40%;
+  opacity: 0.3;
+}
+
+.palette-swatch > i:nth-child(3) {
+  width: 30px;
+  height: 10px;
+  margin-top: 2px;
+  border-radius: 3px;
+  background: var(--sw-primary);
+}
+
+.palette-option[data-swatch="loom"] { --sw-bg: #111312; --sw-panel: #1f2220; --sw-text: #f1f3ef; --sw-primary: #eceee9; --sw-accent: #9bbaff; }
+.palette-option[data-swatch="geist"] { --sw-bg: #0a0a0a; --sw-panel: #1a1a1a; --sw-text: #f5f5f5; --sw-primary: #0070f3; --sw-accent: #3291ff; }
+.palette-option[data-swatch="aurora"] {
+  --sw-bg: #0b1020;
+  --sw-panel: #16213a;
+  --sw-text: #f8fafc;
+  --sw-primary: #8b5cf6;
+  --sw-accent: #38bdf8;
+  --sw-glow: radial-gradient(90% 80% at 0% 0%, rgba(139, 92, 246, 0.35), transparent 70%);
+}
+[data-theme="light"] .palette-option[data-swatch="loom"] { --sw-bg: #f2f2ef; --sw-panel: #ffffff; --sw-text: #20211f; --sw-primary: #20211f; --sw-accent: #275dc2; }
+[data-theme="light"] .palette-option[data-swatch="geist"] { --sw-bg: #f4f4f5; --sw-panel: #ffffff; --sw-text: #111111; --sw-primary: #0070f3; --sw-accent: #0062d6; }
+[data-theme="light"] .palette-option[data-swatch="aurora"] {
+  --sw-bg: #f1f2fa;
+  --sw-panel: #ffffff;
+  --sw-text: #0b1020;
+  --sw-primary: #6d3fe6;
+  --sw-accent: #0e6e8c;
+  --sw-glow: radial-gradient(90% 80% at 0% 0%, rgba(139, 92, 246, 0.16), transparent 70%);
+}
+
+@media (hover: hover) {
+  .palette-option:hover .palette-swatch {
+    box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 3px var(--border-strong);
+  }
+}
+
+.palette-option[aria-pressed="true"] .palette-swatch {
+  box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 3.5px var(--text-strong);
+}
+
+.palette-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: 0 1px;
+  font-size: var(--fs-xs);
+}
+
+.palette-option[aria-pressed="true"] .palette-name {
+  color: var(--text-strong);
+  font-weight: var(--fw-semibold);
+}
+
+.palette-tick {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  border: var(--hairline) solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-size: 9px;
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+}
+
+.palette-option[aria-pressed="true"] .palette-tick {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+
+.palette-option[aria-pressed="true"] .palette-tick::after {
+  content: "✓";
+}
+
+@media (max-width: 640px) {
+  .palette-picker {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.settings-row > div:first-child {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.settings-label {
+  color: var(--text-strong);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.settings-description,
+.settings-hint {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+}
+
+.settings-hint,
+.settings-about p {
+  margin: 0;
+}
+
+.settings-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+}
+
+.settings-stepper output {
+  min-width: var(--touch-target);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.settings-font-input {
+  flex: 0 1 50%;
+  min-width: 0;
+}
+
+.settings-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(var(--touch-target) + var(--space-2));
+  height: var(--touch-target);
+  padding: var(--space-2) var(--space-1);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.settings-toggle::before {
+  position: absolute;
+  inset: var(--space-3) var(--space-1);
+  content: "";
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.settings-toggle-thumb {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-1);
+  width: var(--space-4);
+  height: var(--space-4);
+  background: var(--text-dim);
+  border-radius: var(--radius-pill);
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+
+.settings-toggle[aria-checked="true"]::before {
+  background: var(--primary-tint);
+  border-color: var(--primary);
+}
+
+.settings-toggle[aria-checked="true"] .settings-toggle-thumb {
+  background: var(--primary);
+  transform: translateX(var(--space-5));
+}
+
+.settings-shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.settings-shortcuts th,
+.settings-shortcuts td {
+  padding: var(--space-2) 0;
+  border-bottom: var(--hairline) solid var(--border);
+  font-size: var(--fs-sm);
+}
+
+.settings-shortcuts th {
+  color: var(--text);
+  font-weight: var(--fw-regular);
+  text-align: left;
+}
+
+/* the cell stays a table cell (a flex td drops out of the row and splits its rule); the
+   keycaps sit inline, right-aligned */
+.settings-shortcuts td {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.settings-shortcuts td .kbd + .kbd {
+  margin-left: var(--space-1);
+}
+
+.settings-about a:not(.btn) {
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .settings-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settings-row > .segmented,
+  .settings-row > .settings-stepper {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .settings-row > .settings-font-input {
+    align-self: stretch;
+  }
+
+  /* five languages outgrow a narrow phone: wrap rather than overflow the dialog */
+  .settings-row > .segmented {
+    flex-wrap: wrap;
+  }
+
+  .settings-row:has(> .settings-toggle) {
+    align-items: center;
+    flex-direction: row;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-toggle::before,
+  .settings-toggle-thumb {
+    transition: none;
+  }
+}
+
+.quick-replies-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quick-replies-list li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.quick-replies-list .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Voice input: the key field and its buttons share a row, the notes stay dim */
+.voice-key {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.voice-key-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.voice-error {
+  color: var(--danger-text);
+}
+
+/* Voice input: one card per concern (mic, key, tidying, usage), headed like the usage accounts card */
+.voice-group {
+  overflow: hidden;
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.voice-group-title {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 var(--space-3);
+  background: var(--bg-elevated);
+  border-bottom: var(--hairline) solid var(--border);
+  color: var(--text-dim);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.voice-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* Subscription usage: one card of accounts, a row each: mark, name, account, then move and show */
+.usage-accounts {
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.usage-accounts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 30px;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  background: var(--bg-elevated);
+  border-bottom: var(--hairline) solid var(--border);
+  color: var(--text-dim);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.usage-accounts-reset {
+  padding: 2px var(--space-1);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.usage-accounts ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.usage-accounts-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 38px;
+  padding: 0 var(--space-1) 0 var(--space-3);
+}
+
+.usage-accounts-row + .usage-accounts-row {
+  border-top: var(--hairline) solid var(--border);
+}
+
+.usage-accounts-name {
+  flex: 0 0 auto;
+  color: var(--text-strong);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.usage-accounts-account {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usage-accounts-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.usage-accounts-actions .icon-button {
+  color: var(--text-dim);
+}
+
+/* the ends of the list cannot move further: that arrow keeps its place in the column, unseen */
+.usage-accounts-actions .icon-button:disabled {
+  visibility: hidden;
+}
+
+.usage-accounts-visibility[aria-checked="true"] {
+  color: var(--text);
+}
+
+/* a hidden account stays in the list, faded, so it can be shown again */
+.usage-accounts-row.is-hidden > :not(.usage-accounts-actions) {
+  opacity: 0.45;
+}
+
+@media (hover: hover) {
+  .usage-accounts-reset:hover {
+    background: var(--bg-hover);
+  }
+}
+
+@media (pointer: fine) {
+  .usage-accounts-actions .icon-button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .usage-accounts-actions .icon-button svg {
+    width: 16px;
+    height: 16px;
+  }
+}

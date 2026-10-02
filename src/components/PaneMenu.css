@@ -1,0 +1,63 @@
+/* herdr's pane menu at the pointer: the shared .menu surface, fixed above the pane. Like the
+   dialogs, it snaps open (DESIGN.md: only state changes move) */
+.pane-menu {
+  position: fixed;
+  z-index: var(--z-modal);
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 16px));
+}
+
+.pane-menu .menu-item {
+  min-height: 32px;
+}
+
+.pane-menu .menu-item:focus-visible {
+  outline: none;
+  background: var(--bg-hover);
+  color: var(--text-strong);
+}
+
+/* the pointer reads the row it is over, the keyboard the row it is on: one highlight at a time */
+@media (hover: hover) {
+  .pane-menu:has(.menu-item:hover) .menu-item:focus-visible:not(:hover) {
+    background: transparent;
+    color: var(--text);
+  }
+}
+
+.pane-menu-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-top: var(--space-2);
+  /* a pane's name, often a path: read as written, not as an overline */
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.pane-menu-separator {
+  height: var(--hairline);
+  margin: var(--space-1) var(--space-2);
+  background: var(--border);
+}
+
+.pane-menu .pane-menu-check {
+  color: var(--text-strong);
+}
+
+.pane-menu .pane-menu-close,
+.pane-menu .pane-menu-close svg {
+  color: var(--status-blocked);
+}
+
+.pane-menu .pane-menu-close.is-armed {
+  background: var(--danger-tint);
+  font-weight: var(--fw-semibold);
+}
+
+.pane-rename-modal {
+  width: min(100%, 420px);
+}

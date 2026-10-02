@@ -1,0 +1,1273 @@
+/*
+ * Shell layout + shared primitives for Herdloom.
+ *
+ * Every color, size and space is a :root token; DESIGN.md is the human-readable
+ * mirror of this block and the two must not drift. The tokens follow the Fileloom
+ * design system: quiet tonal surfaces, hairlines, ink for the user's action and a
+ * blue focus ring. Dark is the default theme and `[data-theme="light"]` overrides the
+ * color group only (src/lib/settings.ts sets the attribute); `[data-density="compact"]`
+ * overrides the type scale and row heights. The base blocks are the Loom palette (the
+ * approved Fileloom paper/ink look), the default and the look before settings load;
+ * `[data-palette]` blocks override them for the opt-in Geist and Aurora palettes,
+ * which mirror Fileloom's Dark and Aurora app themes. xterm cannot read CSS custom
+ * properties, so the --term-* group is mirrored in settings.ts `terminalTheme()`.
+ * Component-scoped rules live beside their component (Sidebar.css,
+ * PaneTerminal.css, ...); this file owns the app shell, the header and the
+ * primitives (.icon-button, .btn, .pill, .badge, .segmented, .modal, .menu, .kbd)
+ * that more than one component uses.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* surfaces (tonal steps, darkest to lightest): Fileloom's green-grey graphite */
+  --bg: #111312;
+  --bg-panel: #171918;
+  --bg-elevated: #1f2220;
+  --bg-hover: #282b29;
+  --bg-input: #141615;
+  --border: #2a2d2b;
+  --border-strong: #3a3e3a;
+
+  /* text */
+  --text: #d9ddd6;
+  --text-dim: #a3a8a1;
+  --text-strong: #f1f3ef;
+
+  /* ink is the one chrome color: selection, the cursor and the user's own action.
+     Focus is Fileloom's blue ring; agent states carry the remaining colors */
+  --accent: #eceee9;
+  --accent-tint: rgba(236, 238, 233, 0.08);
+  --primary: #eceee9;
+  --primary-hover: #ffffff;
+  --primary-text: #171918;
+  --primary-tint: rgba(236, 238, 233, 0.1);
+  --focus: #9bbaff;
+  --status-idle: #a3a8a1;
+  --status-working: #9bbaff;
+  --status-blocked: #ffaaa2;
+  --status-done: #a3d9a5;
+  --status-working-tint: rgba(155, 186, 255, 0.13);
+  --status-blocked-tint: rgba(255, 170, 162, 0.13);
+  --status-done-tint: rgba(163, 217, 165, 0.13);
+  --danger-tint: rgba(255, 170, 162, 0.12);
+  --danger-text: #ffd6d1;
+
+  /* overlays: layered, soft shadows; the scrim also blurs (see .modal-scrim) */
+  --scrim: rgba(6, 8, 7, 0.55);
+  --shadow-drawer: 0 0 48px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 24px 64px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.22);
+  --shadow-raise: 0 1px 2px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  /* a palette's signature light behind the shell; Loom and Geist keep the canvas flat */
+  --canvas-glow: none;
+
+  /* terminal theme: mirrored verbatim in src/lib/settings.ts terminalTheme() */
+  --term-bg: #171918;
+  --term-fg: #dfe2dc;
+  --term-cursor: #eceee9;
+  --term-selection: #2f3d55;
+  /* Fileloom's panel: the one surface lifted above the chrome (selected row, chosen
+     segment, the user's chat turn); paired with --shadow-raise */
+  --bg-raised: #232624;
+
+  /* type (comfortable density; compact overrides below). Geist is bundled (src/main.tsx);
+     Hangul and other scripts fall through to the system and Pretendard */
+  --font-ui: "Geist Variable", -apple-system, BlinkMacSystemFont, "Pretendard Variable", Pretendard, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --font-mono: "Symbols Nerd Font Mono", "Geist Mono Variable", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "D2Coding", monospace;
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-input: 16px; /* the one size iOS Safari does not zoom on focus */
+  --lh-tight: 1.2;
+  --lh-base: 1.5;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 650;
+  --tracking-tight: -0.02em;
+  --tracking-display: -0.035em;
+  --tracking-caps: 0.06em;
+  --tracking-overline: 0.12em;
+
+  /* space (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* radii: Fileloom's less-rounded base (9-10) with 18px sheets */
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+
+  /* sizes */
+  --header-h: 56px;
+  --sidebar-w: 320px;
+  --control-h: 36px;
+  --touch-target: 44px;
+  --keybar-h: 48px;
+  --row-h: 56px;
+  --chip-h: 20px;
+  --icon-size: 18px;
+  --mark-size: 26px;
+  --avatar-size: 32px;
+  --dot-size: 7px;
+  --rail-w: 3px;
+  --hairline: 1px;
+  --content-w: 820px;
+  --palette-w: 640px;
+  --palette-top: 12vh;
+
+  /* focus */
+  --ring: 2px solid var(--focus);
+  --ring-offset: 2px;
+
+  /* motion: only real state changes move (drawer, dialogs, working/reconnecting pulse) */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-pulse: 1600ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  /* the pulse jumps between its two looks: a smooth one has the browser draw a new frame at
+     every display refresh for as long as an agent works (60+ a second), which stutters a
+     video playing beside the app; two steps draw about one frame a second */
+  --ease-pulse: steps(2, jump-none);
+
+  /* layers */
+  --z-banner: 5;
+  --z-popover: 10;
+  --z-scrim: 15;
+  --z-drawer: 20;
+  --z-modal: 30;
+  --z-droplet: 40;
+
+  /* in-app alert (components/Droplet.css): island black in either theme, so one set */
+  --droplet-bg: #000;
+  --droplet-text: #f5f5f7;
+  --droplet-text-dim: rgba(245, 245, 247, 0.62);
+  --droplet-blocked: #ff8a80;
+  --droplet-done: #9fd47a;
+  --droplet-mark-bg: rgba(255, 255, 255, 0.1);
+  --droplet-ring: rgba(255, 255, 255, 0.1);
+  --droplet-shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* Loom on paper: Fileloom's approved light surfaces (#f7f7f5 page, white panel, ink) */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f2ef;
+  --bg-panel: #fbfbfa;
+  --bg-elevated: #f0f0ed;
+  --bg-hover: #e8e9e5;
+  --bg-input: #ffffff;
+  --border: #e2e3df;
+  --border-strong: #cdd0ca;
+  --text: #2b2d2a;
+  --text-dim: #5e615b;
+  --text-strong: #20211f;
+  --accent: #20211f;
+  --accent-tint: rgba(32, 33, 31, 0.06);
+  --primary: #20211f;
+  --primary-hover: #3a3c38;
+  --primary-text: #fbfbfa;
+  --primary-tint: rgba(32, 33, 31, 0.08);
+  --focus: #275dc2;
+  --status-idle: #5e615b;
+  --status-working: #2754ad;
+  --status-blocked: #a8302f;
+  --status-done: #2b6236;
+  --status-working-tint: rgba(39, 84, 173, 0.1);
+  --status-blocked-tint: rgba(168, 48, 47, 0.1);
+  --status-done-tint: rgba(43, 98, 54, 0.1);
+  --danger-tint: rgba(168, 48, 47, 0.08);
+  --danger-text: #8f2726;
+  --scrim: rgba(29, 39, 26, 0.24);
+  --shadow-drawer: 0 0 48px rgba(29, 39, 26, 0.16);
+  --shadow-pop: 0 24px 60px rgba(29, 39, 26, 0.14), 0 4px 12px rgba(29, 39, 26, 0.06), 0 0 0 1px var(--border);
+  --shadow-card: 0 1px 2px rgba(29, 39, 26, 0.05), 0 12px 35px rgba(29, 39, 26, 0.05);
+  --shadow-raise: 0 1px 3px rgba(29, 39, 26, 0.1), 0 0 0 1px rgba(29, 39, 26, 0.04);
+  --term-bg: #fbfbfa;
+  --term-fg: #2b2d2a;
+  --term-cursor: #20211f;
+  --term-selection: #d6e2f7;
+  --bg-raised: #ffffff;
+}
+
+/* Geist (Settings → Appearance → Colors): Fileloom's classic app theme - near-black
+   #0a0a0a canvas, zinc text and Vercel blue #0070f3 for the user's action. Agent states
+   use Fileloom's other two accents (purple working, then red and green) and never blue.
+   Slightly crisper corners than Loom. */
+[data-palette="geist"] {
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+}
+
+[data-theme="dark"][data-palette="geist"] {
+  --bg: #0a0a0a;
+  --bg-panel: #111111;
+  --bg-elevated: #1a1a1a;
+  --bg-hover: #222222;
+  --bg-input: #0d0d0d;
+  --border: #27272a;
+  --border-strong: #3f3f46;
+  --text: #e4e4e7;
+  --text-dim: #a1a1aa;
+  --text-strong: #f5f5f5;
+  --accent: #3291ff;
+  --accent-tint: rgba(0, 112, 243, 0.16);
+  --primary: #0070f3;
+  --primary-hover: #1a7ffa;
+  --primary-text: #ffffff;
+  --primary-tint: rgba(0, 112, 243, 0.18);
+  --focus: #3291ff;
+  --status-idle: #a1a1aa;
+  --status-working: #b9a2fb;
+  --status-blocked: #ff7a7f;
+  --status-done: #4fd69c;
+  --status-working-tint: rgba(139, 92, 246, 0.16);
+  --status-blocked-tint: rgba(255, 99, 105, 0.14);
+  --status-done-tint: rgba(62, 207, 142, 0.13);
+  --danger-tint: rgba(255, 99, 105, 0.12);
+  --danger-text: #ffd5d7;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --term-bg: #111111;
+  --term-fg: #e4e4e7;
+  --term-cursor: #3291ff;
+  --term-selection: #10345f;
+  --bg-raised: #1f1f1f;
+}
+
+[data-theme="light"][data-palette="geist"] {
+  --bg: #f4f4f5;
+  --bg-panel: #ffffff;
+  --bg-elevated: #f7f7f8;
+  --bg-hover: #ededef;
+  --bg-input: #ffffff;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-dim: #52525b;
+  --text-strong: #111111;
+  --accent: #0062d6;
+  --accent-tint: rgba(0, 112, 243, 0.08);
+  --primary: #0070f3;
+  --primary-hover: #0062d6;
+  --primary-text: #ffffff;
+  --primary-tint: rgba(0, 112, 243, 0.1);
+  --focus: #0070f3;
+  --status-idle: #52525b;
+  --status-working: #6d28d9;
+  --status-blocked: #b41c24;
+  --status-done: #0f6a40;
+  --status-working-tint: rgba(109, 40, 217, 0.09);
+  --status-blocked-tint: rgba(196, 35, 43, 0.09);
+  --status-done-tint: rgba(18, 117, 72, 0.09);
+  --danger-tint: rgba(196, 35, 43, 0.08);
+  --danger-text: #a01c23;
+  --scrim: rgba(17, 17, 17, 0.3);
+  --term-bg: #ffffff;
+  --term-fg: #18181b;
+  --term-cursor: #0070f3;
+  --term-selection: #cfe3ff;
+  --bg-raised: #ffffff;
+}
+
+/* Aurora: Fileloom's premium theme - midnight navy surfaces, a violet action, cyan for
+   selection and focus, and a faint aurora light behind the shell. Agent states keep to
+   lavender, rose and mint, none of them cyan. Light keeps the hues on lavender paper. */
+[data-theme="dark"][data-palette="aurora"] {
+  --bg: #0b1020;
+  --bg-panel: #111827;
+  --bg-elevated: #16213a;
+  --bg-hover: #1e2b49;
+  --bg-input: #0e1528;
+  --border: #27324a;
+  --border-strong: #3b4d73;
+  --text: #dbe3ff;
+  --text-dim: #9aaedc;
+  --text-strong: #f8fafc;
+  --accent: #38bdf8;
+  --accent-tint: rgba(56, 189, 248, 0.14);
+  --primary: #8b5cf6;
+  --primary-hover: #9d74f8;
+  --primary-text: #ffffff;
+  --primary-tint: rgba(139, 92, 246, 0.22);
+  --focus: #38bdf8;
+  --status-idle: #9aaedc;
+  --status-working: #c4b5fd;
+  --status-blocked: #fda4af;
+  --status-done: #6ee7b7;
+  --status-working-tint: rgba(167, 139, 250, 0.16);
+  --status-blocked-tint: rgba(251, 113, 133, 0.14);
+  --status-done-tint: rgba(52, 211, 153, 0.13);
+  --danger-tint: rgba(251, 113, 133, 0.12);
+  --danger-text: #ffd6dc;
+  --scrim: rgba(2, 6, 23, 0.7);
+  --shadow-drawer: 0 0 48px rgba(2, 6, 23, 0.7);
+  --shadow-pop: 0 24px 64px rgba(2, 6, 23, 0.65), 0 0 0 1px var(--border), 0 0 48px rgba(6, 182, 212, 0.06);
+  --shadow-card: 0 1px 2px rgba(2, 6, 23, 0.5), 0 10px 30px rgba(2, 6, 23, 0.4);
+  --shadow-raise: 0 1px 2px rgba(2, 6, 23, 0.6), inset 0 1px 0 rgba(199, 210, 254, 0.06);
+  --canvas-glow:
+    radial-gradient(60% 50% at 0% 0%, rgba(139, 92, 246, 0.12), transparent 70%),
+    radial-gradient(50% 40% at 100% 0%, rgba(6, 182, 212, 0.08), transparent 70%);
+  --term-bg: #111827;
+  --term-fg: #dbe3ff;
+  --term-cursor: #38bdf8;
+  --term-selection: #27406b;
+  --bg-raised: #1b2744;
+}
+
+[data-theme="light"][data-palette="aurora"] {
+  --bg: #f1f2fa;
+  --bg-panel: #fbfbff;
+  --bg-elevated: #eef0fa;
+  --bg-hover: #e6e9f6;
+  --bg-input: #ffffff;
+  --border: #dfe3f3;
+  --border-strong: #c5cbe6;
+  --text: #1e2440;
+  --text-dim: #505a80;
+  --text-strong: #0b1020;
+  --accent: #0e6e8c;
+  --accent-tint: rgba(14, 110, 140, 0.08);
+  --primary: #6d3fe6;
+  --primary-hover: #5b2fd4;
+  --primary-text: #ffffff;
+  --primary-tint: rgba(109, 63, 230, 0.1);
+  --focus: #0e7fa3;
+  --status-idle: #505a80;
+  --status-working: #6a35d0;
+  --status-blocked: #b4183d;
+  --status-done: #03644a;
+  --status-working-tint: rgba(124, 58, 237, 0.09);
+  --status-blocked-tint: rgba(190, 18, 60, 0.08);
+  --status-done-tint: rgba(4, 120, 87, 0.09);
+  --danger-tint: rgba(190, 18, 60, 0.07);
+  --danger-text: #9f1239;
+  --scrim: rgba(11, 16, 32, 0.28);
+  --shadow-drawer: 0 0 48px rgba(30, 36, 64, 0.16);
+  --shadow-pop: 0 24px 60px rgba(30, 36, 64, 0.14), 0 4px 12px rgba(30, 36, 64, 0.06), 0 0 0 1px var(--border);
+  --shadow-card: 0 1px 2px rgba(30, 36, 64, 0.05), 0 12px 35px rgba(30, 36, 64, 0.06);
+  --shadow-raise: 0 1px 3px rgba(30, 36, 64, 0.1), 0 0 0 1px rgba(30, 36, 64, 0.04);
+  --canvas-glow:
+    radial-gradient(60% 50% at 0% 0%, rgba(139, 92, 246, 0.07), transparent 70%),
+    radial-gradient(50% 40% at 100% 0%, rgba(6, 182, 212, 0.06), transparent 70%);
+  --term-bg: #fbfbff;
+  --term-fg: #1e2440;
+  --term-cursor: #0e6e8c;
+  --term-selection: #d9e4fb;
+  --bg-raised: #ffffff;
+}
+
+[data-density="compact"] {
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 17px;
+  --lh-base: 1.45;
+  --header-h: 46px;
+  --sidebar-w: 300px;
+  --control-h: 32px;
+  --row-h: 44px;
+  --chip-h: 18px;
+  --avatar-size: 26px;
+}
+
+/* ---------- reset + base ---------- */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: var(--ring);
+  outline-offset: var(--ring-offset);
+}
+
+/* only dots pulse (connection, RUN, "Working…"): state words stay at full contrast, so the
+   trough can go deep enough to read as motion */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* read by assistive tech, not drawn: a live status that would repeat what a dot shows */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- shell ---------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: var(--app-height, 100dvh);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) calc(var(--space-3) + env(safe-area-inset-right, 0px)) 0
+    calc(var(--space-3) + env(safe-area-inset-left, 0px));
+  background: var(--canvas-glow), var(--bg-panel);
+  background-attachment: fixed;
+  border-bottom: var(--hairline) solid var(--border);
+  /* Keep the header's painted background at the top of the app. The home-screen
+     status-bar layout is controlled by index.html; see docs/ios-home-screen-testing.md. */
+  position: sticky;
+  top: 0;
+}
+
+.app-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  min-height: 0;
+  background: var(--canvas-glow), var(--bg-panel);
+  background-attachment: fixed;
+  border-right: var(--hairline) solid var(--border);
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.app.sidebar-collapsed .sidebar {
+  display: none;
+}
+
+.scrim {
+  display: none;
+}
+
+.terminal-host {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-panel);
+  padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+
+/* the chat's composer takes the home-indicator inset itself (Composer.css): kept here as
+   well, it stacked under the composer's own padding as a band of another colour */
+.terminal-host:has(.composer) {
+  padding-bottom: 0;
+}
+
+/* ---------- header ---------- */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--lh-tight);
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+/* Fileloom's mark: an ink tile carrying the glyph in the panel color (BrandMark.tsx) */
+.brand-mark {
+  display: block;
+  flex: 0 0 auto;
+  width: var(--mark-size);
+  height: var(--mark-size);
+  color: var(--text-strong);
+}
+
+/* the selected pane: title line + workspace › agent subtitle, like a chat app's header */
+.context {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: var(--lh-tight);
+}
+
+.context-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  letter-spacing: var(--tracking-tight);
+}
+
+.context-title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-sub {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.context-sub > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-sep {
+  flex: 0 0 auto;
+}
+
+/* the switch keeps its size; the pane title (.context) is the header's one flexible item */
+.view-switch {
+  flex: 0 0 auto;
+}
+
+.header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-size: var(--fs-xs);
+}
+
+/* one chip for the connection; the herdr version lives in its tooltip and the sidebar footer */
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--chip-h);
+  white-space: nowrap;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+}
+
+.conn-dot {
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: var(--radius-pill);
+  background: var(--status-done);
+}
+
+.conn-reconnecting {
+  color: var(--status-working);
+}
+
+.conn-reconnecting .conn-dot {
+  background: var(--status-working);
+  animation: pulse var(--dur-pulse) var(--ease-pulse) infinite;
+}
+
+/* the bell while notifications are live: the accent reads as "on"; a plain
+   .icon-button is the idle/asking state. The button is disabled once granted:
+   browsers cannot re-ask, and the title explains the state */
+.bell-button.is-on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ---------- primitives ---------- */
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  background: transparent;
+  border: var(--hairline) solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.icon-button.is-outlined {
+  border-color: var(--border);
+}
+
+/* a disabled control must not read as the strongest control on screen: 0.7 keeps the dark
+   accent glyph at 4.93:1 on --bg-panel (disabled controls are exempt from the AA minimum) */
+.icon-button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.icon-button svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+/* hover only where a pointer can hover: after a tap a touch screen keeps :hover on the button */
+@media (hover: hover) {
+  .icon-button:hover:not(:disabled) {
+    background: var(--bg-hover);
+  }
+}
+
+.icon-button:active,
+.icon-button[aria-expanded="true"] {
+  background: var(--bg-raised);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-raise);
+  color: var(--text-strong);
+}
+
+/* after .icon-button on purpose: same specificity, and hidden must win on desktop */
+.drawer-toggle {
+  display: none;
+}
+
+/* text buttons: .btn (neutral), .btn-primary, .btn-danger, .btn-ghost */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-h);
+  padding: 0 var(--space-3);
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-strong);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  text-decoration: none; /* a link styled as a button (Reconnect, Star on GitHub) */
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+  }
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+}
+
+.btn-danger {
+  background: var(--danger-tint);
+  border-color: var(--status-blocked);
+  color: var(--danger-text);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text);
+}
+
+@media (hover: hover) {
+  .btn-ghost:hover:not(:disabled) {
+    border-color: transparent;
+  }
+}
+
+/* fingers: the header controls grow to the touch target; the header still fits them */
+@media (pointer: coarse) {
+  .icon-button {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
+  .btn,
+  .error-retry {
+    height: var(--touch-target);
+  }
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: var(--chip-h);
+  padding: 0 var(--space-2);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.pill-offline {
+  color: var(--status-blocked);
+  border-color: var(--status-blocked);
+  background: var(--danger-tint);
+}
+
+/* a lens that is on its way: inside a segmented button, so it stays small */
+.pill-soon {
+  height: auto;
+  padding: 0 var(--space-1);
+  margin-left: var(--space-1);
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  text-transform: uppercase;
+}
+
+/* status badge: tinted background + text, the state readable as a word */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--chip-h);
+  padding: 0 var(--space-2);
+  border: var(--hairline) solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-idle {
+  color: var(--text-dim);
+  background: var(--bg-elevated);
+}
+
+.badge-working {
+  color: var(--status-working);
+  background: var(--status-working-tint);
+}
+
+/* RUN is the one state that moves: a dot breathes before the word, the word holds still */
+.badge-working::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  animation: pulse var(--dur-pulse) var(--ease-pulse) infinite;
+}
+
+.badge-blocked {
+  color: var(--status-blocked);
+  background: var(--status-blocked-tint);
+}
+
+.badge-done {
+  color: var(--status-done);
+  background: var(--status-done-tint);
+}
+
+/* a pane herdr could not restore: no status to show, and nothing runs in it */
+.badge-restore-error {
+  color: var(--danger-text);
+  background: var(--danger-tint);
+}
+
+/* unknown keeps the dim text color (contrast) and is told apart by the dashed edge */
+.badge-unknown {
+  color: var(--text-dim);
+  border-color: var(--border);
+  border-style: dashed;
+}
+
+/* segmented control: Fileloom's switch - a soft track, the chosen option lifted onto the
+   raised surface; the rest quiet */
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border);
+  border-radius: calc(var(--radius-md) + 2px);
+}
+
+.segmented > button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap; /* Hangul/CJK may break between any two syllables: keep a label on one line */
+  height: calc(var(--control-h) - 8px);
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 1px);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.segmented > button svg {
+  width: 15px;
+  height: 15px;
+}
+
+@media (hover: hover) {
+  .segmented > button:hover:not([aria-pressed="true"]) {
+    color: var(--text-strong);
+  }
+}
+
+.segmented > button[aria-pressed="true"] {
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raise);
+  color: var(--text-strong);
+  font-weight: var(--fw-semibold);
+}
+
+/* the chosen lens carries the selection color on its glyph, like the rail does in the list */
+.segmented > button[aria-pressed="true"] svg {
+  color: var(--accent);
+}
+
+/* keyboard key hint */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  border: var(--hairline) solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  line-height: 1;
+}
+
+/* modal dialog: scrim + centered card; mobile: bottom sheet */
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  max-height: min(100%, 720px);
+  background: var(--bg-panel);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: var(--hairline) solid var(--border);
+}
+
+.modal-title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-tight);
+  color: var(--text-strong);
+}
+
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-5);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-top: var(--hairline) solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .modal-scrim {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: 92%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* form fields inside dialogs */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.field-label {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+}
+
+.field-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.input,
+.select {
+  height: var(--control-h);
+  padding: 0 var(--space-3);
+  background: var(--bg-input);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: var(--fs-input);
+}
+
+/* a bordered field shows focus on its own border; the offset ring is for controls without one */
+.input:focus,
+.select:focus,
+.input:focus-visible,
+.select:focus-visible {
+  border-color: var(--focus);
+  outline: none;
+}
+
+@media (min-width: 641px) {
+  .input,
+  .select {
+    font-size: var(--fs-sm);
+  }
+}
+
+/* popover menu (palette rows, slash/@ completions) */
+.menu {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1);
+  background: var(--bg-panel);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--text-dim);
+}
+
+.menu-item[aria-selected="true"] {
+  background: var(--bg-hover);
+  color: var(--text-strong);
+}
+
+@media (hover: hover) {
+  .menu-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-strong);
+  }
+}
+
+.menu-item-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-item-hint {
+  flex: 0 0 auto;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.menu-heading {
+  padding: var(--space-3) var(--space-2) var(--space-1);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ---------- sidebar error state (App-owned) ---------- */
+
+.error-state {
+  margin: var(--space-2);
+  padding: var(--space-3);
+  border: var(--hairline) solid var(--status-blocked);
+  border-radius: var(--radius-md);
+  background: var(--danger-tint);
+}
+
+.error-message {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--danger-text);
+  overflow-wrap: anywhere;
+}
+
+.error-retry {
+  height: var(--control-h);
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: var(--hairline) solid var(--status-blocked);
+  border-radius: var(--radius-sm);
+  color: var(--danger-text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .error-retry:hover {
+    background: var(--danger-tint);
+  }
+}
+
+/* ---------- mobile: sidebar becomes a drawer ---------- */
+
+@media (max-width: 768px) {
+  .drawer-toggle {
+    display: inline-flex;
+  }
+
+  /* drawer mode: the collapse toggle has nothing to collapse, and sign out is in the palette */
+  .sidebar-toggle,
+  .lock-button {
+    display: none;
+  }
+
+  .app.sidebar-collapsed .sidebar {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-drawer);
+    width: min(88vw, var(--sidebar-w));
+    transform: translateX(-100%);
+    visibility: hidden;
+    box-shadow: var(--shadow-drawer);
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      visibility 0s linear var(--dur-base);
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0);
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: calc(var(--header-h) + env(safe-area-inset-top, 0px)) 0 0 0;
+    z-index: var(--z-scrim);
+    background: var(--scrim);
+  }
+
+  .context-title {
+    font-size: var(--fs-md);
+  }
+}
+
+/* the key bar (KeyBar.css) shows under the same query and carries env(safe-area-inset-bottom) itself */
+@media (pointer: coarse), (max-width: 768px) {
+  .terminal-host:has(.key-bar) {
+    padding-bottom: 0; /* no pane = no bar, and the host keeps the inset */
+  }
+}
+
+/* phones: the version pill is the least useful header item; below that, the brand word
+   and the subtitle go too - the drawer names the workspace, and the mark keeps the identity */
+@media (max-width: 480px) {
+  .conn {
+    padding: 0 var(--space-1);
+    background: transparent;
+  }
+
+  .pill-version,
+  .pill-offline,
+  .brand-name,
+  .conn-text,
+  .header-desktop-only {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .context-sub > span:not(.machine-context-name) { display: none; }
+}
+
+/* just above phone width the lens labels would squeeze the pane title to a glyph: icons only */
+@media (max-width: 560px) {
+  .view-switch .header-desktop-only { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .icon-button,
+  .btn,
+  .error-retry {
+    transition: none;
+  }
+
+  .badge-working::before,
+  .conn-reconnecting .conn-dot {
+    animation: none;
+  }
+}
+
+/* a narrow phone header has no room for it: the command palette offers Browse files */
+@media (max-width: 480px) {
+  .files-button { display: none; }
+}
+
+/* Keep native tap overlays from obscuring the app's own pressed/selected states. */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}

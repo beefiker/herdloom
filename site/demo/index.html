@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Herdloom demo</title>
+    <meta name="description" content="Herdloom running in your browser on a fictional session: read the chats, answer the Codex approval, open the sidebar. Nothing here is live." />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="../favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../favicon.png" sizes="64x64" />
+    <meta name="theme-color" content="#171918" />
+    <style>
+      @font-face { font-family: "Geist"; src: url("../assets/fonts/geist.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+      :root { color-scheme: dark; --bg: #111312; --panel: #171918; --line: #2a2d2b; --text: #c9cdc6; --dim: #9a9f98; --ink: #f1f3ef; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body { display: flex; flex-direction: column; height: 100dvh; background: var(--bg); color: var(--text); font: 14px/1.4 "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+      .bar { display: flex; align-items: center; gap: 14px; padding: 0 12px 0 16px; min-height: 44px; background: var(--panel); border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+      .brand { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 650; letter-spacing: -0.02em; text-decoration: none; }
+      .brand img { width: 20px; height: 20px; border-radius: 5px; }
+      .tag { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; }
+      .note { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      nav { margin-left: auto; display: flex; gap: 6px; white-space: nowrap; }
+      nav a { color: var(--text); text-decoration: none; padding: 6px 10px; border-radius: 8px; }
+      nav a:hover { background: #222523; color: var(--ink); }
+      nav a.primary { background: var(--ink); color: #171918; font-weight: 600; }
+      nav a.primary:hover { background: #fff; }
+      iframe { flex: 1 1 auto; width: 100%; border: 0; background: var(--bg); }
+      @media (max-width: 640px) { .note { display: none; } nav a:not(.primary) { display: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="bar" role="banner">
+      <a class="brand" href="../"><img src="../apple-touch-icon.png" alt="" />Herdloom</a>
+      <span class="tag">Demo</span>
+      <span class="note">A made-up session. Nothing here is live, and nothing you type reaches a machine.</span>
+      <nav aria-label="Demo links">
+        <a href="https://github.com/beefiker/herdloom">GitHub</a>
+        <a class="primary" href="../#install">Install it</a>
+      </nav>
+    </div>
+    <iframe src="app/" title="Herdloom, running on the demo session" allow="clipboard-write; fullscreen"></iframe>
+  </body>
+</html>
